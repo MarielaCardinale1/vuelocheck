@@ -11,10 +11,12 @@
         .vc-card { background: white; border-radius: 30px; padding: 25px; box-shadow: 0 10px 30px rgba(232,97,10,0.05); border: 1px solid #eee; margin-bottom: 20px; }
         .vc-btn { cursor: pointer; transition: all 0.2s; border: none; outline: none; }
         .vc-btn:hover { transform: scale(1.02); opacity: 0.9; }
-        .animate-bounce { animation: bounce 2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .vc-input { border: 1px solid #eee; border-radius: 15px; padding: 12px 15px; width: 100%; font-weight: 700; outline: none; transition: all 0.3s; }
+        .vc-input:focus { border-color: #E8610A; background: white; }
         #checklist-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: none; z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: white; width: 100%; max-width: 450px; border-radius: 40px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .animate-bounce { animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
 </head>
 <body>
@@ -36,30 +38,42 @@
         </nav>
 
         <main style="padding: 30px 20px; max-width: 500px; margin: 0 auto;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px;">
-                <div>
-                    <h1 style="font-weight: 900; font-size: 2.2rem; letter-spacing: -1px;">MIS VIAJES</h1>
-                    <p style="color: #888; font-weight: 500;">Gestiona tus itinerarios.</p>
-                </div>
-                <button onclick="openChecklist()" class="vc-btn" style="background: #f5f5f5; padding: 15px; border-radius: 20px;">
-                    <img src="https://img.icons8.com/ios-filled/50/555555/list.png" style="width: 20px;">
+            <div style="text-align: center; margin-bottom: 35px;">
+                <h2 style="font-weight: 900; font-size: 2rem; margin-bottom: 5px; letter-spacing: -1px;">HOLA, VIAJERO</h2>
+                <p style="color: #888; font-size: 0.9rem;">¿Qué vuelo rastreamos hoy?</p>
+            </div>
+
+            <!-- Buscador (Lo primero que se ve) -->
+            <div style="display: flex; gap: 10px; margin-bottom: 40px; background: white; padding: 8px; border-radius: 22px; box-shadow: 0 15px 35px rgba(232,97,10,0.06); border: 1px solid #eee;">
+                <input id="flight-input" class="vc-input" placeholder="Ej: AR1304" style="border: none;">
+                <button onclick="searchFlight()" class="vc-btn" style="background: #E8610A; color: white; width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <img src="https://img.icons8.com/ios-filled/50/ffffff/search.png" style="width: 22px;">
                 </button>
             </div>
 
             <div id="flight-list"></div>
 
-            <div style="background: linear-gradient(135deg, #E8610A, #C4500A); padding: 35px; border-radius: 40px; color: white; position: relative; overflow: hidden;">
-                <h3 id="premium-title" style="font-weight: 900; font-size: 1.5rem; margin-bottom: 10px;">PLAN PREMIUM 💎</h3>
-                <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 25px;">Alertas 24/7 e ilimitados.</p>
-                <div id="premium-actions" style="display: flex; gap: 10px;">
-                    <button onclick="window.open('https://buy.stripe.com/test_555', '_blank')" class="vc-btn" style="flex: 1; background: white; color: #E8610A; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 0.7rem;">PLAN VIAJERO $5</button>
-                    <button onclick="window.open('https://buy.stripe.com/test_1515', '_blank')" class="vc-btn" style="flex: 1; background: rgba(0,0,0,0.2); color: white; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 0.7rem; border: 1px solid rgba(255,255,255,0.2);">PLAN $15</button>
+            <!-- Botón Checklist -->
+            <button onclick="openChecklist()" class="vc-btn" style="width: 100%; background: white; border: 1px solid #eee; padding: 20px; border-radius: 25px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="https://img.icons8.com/ios-filled/50/E8610A/list.png" style="width: 24px;">
+                    <span style="font-weight: 900; font-size: 0.9rem;">MI CHECKLIST DE VIAJE</span>
                 </div>
+                <img src="https://img.icons8.com/ios-filled/50/cccccc/forward.png" style="width: 16px;">
+            </button>
+
+            <!-- Banner Premium (Sutil al final) -->
+            <div style="background: white; border: 1px solid #eee; padding: 25px; border-radius: 35px; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                <div style="text-align: left;">
+                    <h4 style="font-weight: 900; font-size: 0.8rem; color: #E8610A; margin-bottom: 2px;">PLAN PREMIUM BETA 💎</h4>
+                    <p style="font-size: 0.65rem; color: #999; font-weight: 700;">Alertas 24/7 e ilimitados.</p>
+                </div>
+                <button onclick="window.open('https://buy.stripe.com/test_555', '_blank')" class="vc-btn" style="background: #E8610A; color: white; padding: 12px 20px; border-radius: 14px; font-weight: 900; font-size: 0.7rem;">Plan Viajero $5</button>
             </div>
         </main>
     </div>
 
-    <!-- Login Screen -->
+    <!-- Login -->
     <div id="login-screen" style="display: none; height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
         <div style="background: #E8610A; padding: 25px; border-radius: 30px; margin-bottom: 25px; box-shadow: 0 15px 35px rgba(232,97,10,0.2);">
             <img src="https://img.icons8.com/ios-filled/100/ffffff/airplane-mode-on.png" style="width: 50px;">
@@ -84,7 +98,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -125,6 +139,8 @@
         const db = firebase.app().firestore(DB_ID);
         let currentUser = null;
         let checklist = [];
+        let isPremium = false;
+        let searchCount = 0;
 
         auth.onAuthStateChanged(async (user) => {
             document.getElementById('loading-screen').style.display = 'none';
@@ -135,12 +151,8 @@
                 
                 const doc = await db.collection('users').doc(user.uid).get();
                 const data = doc.data();
-                
-                if (data?.isPremium) {
-                    document.getElementById('premium-title').innerText = "PREMIUM ACTIVO 💎";
-                    document.getElementById('premium-actions').style.display = 'none';
-                }
-
+                isPremium = data?.isPremium || false;
+                searchCount = data?.searchCount || 0;
                 checklist = data?.checklist || DEFAULT_CHECKLIST;
                 if (checklist.length < 5) checklist = DEFAULT_CHECKLIST;
                 renderChecklist();
@@ -155,8 +167,33 @@
             }
         });
 
-        function login() { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider); }
+        function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         function logout() { auth.signOut(); }
+
+        async function searchFlight() {
+            const num = document.getElementById('flight-input').value.trim().toUpperCase();
+            if (!num) return;
+
+            if (!isPremium && searchCount >= 2) {
+                alert("¡Límite alcanzado! Pasate a Premium para rastreos ilimitados.");
+                return;
+            }
+
+            // Guardar Vuelo
+            await db.collection(`users/${currentUser.uid}/flights`).add({
+                flightNumber: num,
+                status: 'EN HORARIO',
+                origin: { code: 'EZE' },
+                destination: { code: 'MAD' },
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Incrementar contador
+            searchCount++;
+            await db.collection('users').doc(currentUser.uid).set({ searchCount }, { merge: true });
+            
+            document.getElementById('flight-input').value = '';
+        }
 
         function renderFlights(flights) {
             const list = document.getElementById('flight-list');
@@ -206,7 +243,6 @@
 
         function openChecklist() { document.getElementById('checklist-modal').style.display = 'flex'; }
         function closeChecklist() { document.getElementById('checklist-modal').style.display = 'none'; }
-
     </script>
 </body>
 </html>
