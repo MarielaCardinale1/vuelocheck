@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VueloCheck VH</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
+    <style>
+        :root { --naranja: #E8610A; --fondo: #FDFBFA; --texto: #2D3436; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            margin: 0; font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--fondo); color: var(--texto); 
+        }
+
+        /* Splash Screen */
+        #loader {
+            position: fixed; inset: 0; background: white;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 99; transition: opacity 0.5s;
+        }
+        .avion { font-size: 60px; animation: flotar 2s infinite ease-in-out; }
+        @keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        /* Estructura */
+        header { 
+            background: white; padding: 15px 20px; display: flex; 
+            justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--naranja); position: sticky; top: 0; z-index: 10;
+        }
+        .brand { font-weight: 900; color: var(--naranja); font-size: 1.1rem; }
+        .token-badge { background: #FFE8D6; color: var(--naranja); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+
+        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+        
+        /* Buscador */
+        .search-group { display: flex; gap: 8px; margin-bottom: 25px; }
+        input { 
+            flex: 1; padding: 14px; border: 2px solid #eee; border-radius: 14px; 
+            font-size: 16px; outline: none; border: 1px solid #ddd;
+        }
+        input:focus { border-color: var(--naranja); }
+        button { 
+            background: var(--naranja); color: white; border: none; 
+            padding: 0 20px; border-radius: 14px; font-weight: bold; cursor: pointer;
+        }
+
+        /* Tarjeta TripCase */
+        .vuelo-card { 
+            background: white; border-radius: 20px; padding: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 15px;
+            border-left: 6px solid var(--naranja); animation: entrar 0.4s ease-out;
+        }
+        @keyframes entrar { from { opacity: 0; transform: translateY(10px); } }
+        
+        .card-top { display: flex; justify-content: space-between; font-size: 11px; color: #999; font-weight: bold; margin-bottom: 15px; }
+        .card-mid { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .iata { font-size: 32px; font-weight: 900; color: #111; }
+        
+        .card-bot { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            padding-top: 12px; border-top: 1px solid #f0f0f0; font-size: 12px; 
+        }
+
+        /* WhatsApp */
+        .btn-wa {
+            position: fixed; bottom: 20px; right: 20px; background: #25D366; 
+            color: white; padding: 12px 20px; border-radius: 50px; 
+            text-decoration: none; font-weight: bold; font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="avion">✈️</div>
+    <p style="color: var(--naranja); font-weight: 800; margin-top: 10px; letter-spacing: 1px;">VUELOCHECK VH</p>
+</div>
+
+<header>
+    <div class="brand">VUELOCHECK VH</div>
+    <div class="token-badge">BÚSQUEDAS: <span id="c">2</span>/2</div>
+</header>
+
+<div class="container">
+    <div class="search-group">
+        <input type="text" id="fn" placeholder="Ej: IB6844" autocomplete="off">
+        <button onclick="check()">BUSCAR</button>
+    </div>
+    <div id="results"></div>
+</div>
+
+<a href="https://wa.me/[TU_NUMERO]" class="btn-wa" target="_blank">💬 Mariela (9-18h)</a>
+
+<script>
+    // Configuración
+    const KEY = 'TU_API_KEY_AQUI'; // <--- COLOCA TU KEY DE AVIATIONSTACK
+    const P = "https://api.allorigins.win/get?url=";
+    let s = parseInt(localStorage.getItem('_vh_s') || 0);
+
+    window.onload = () => {
+        setTimeout(() => document.getElementById('loader').style.opacity = '0', 500);
+        setTimeout(() => document.getElementById('loader').style.display = 'none', 1000);
+        u();
+    };
+
+    function u() { document.getElementById('c').innerText = Math.max(0, 2 - s); }
+
+    async function check() {
+        const v = document.getElementById('fn').value.trim().toUpperCase();
+        if (!v) return;
+        if (s >= 2) return alert("Límite de prueba alcanzado. Contacta con Mariela para acceso Premium.");
+
+        const b = document.querySelector('button');
+        b.innerText = "..."; b.disabled = true;
+
+        try {
+            const t = `http://api.aviationstack.com/v1/flights?access_key=${KEY}&flight_iata=${v}`;
+            const r = await fetch(`${P}${encodeURIComponent(t)}`);
+            const j = await r.json();
+            const d = JSON.parse(j.contents);
+
+            if (!d.data || d.data.length === 0) {
+                alert("No hay datos de ese vuelo ahora.");
+            } else {
+                const f = d.data[0];
+                const card = document.createElement('div');
+                card.className = 'vuelo-card';
+                card.innerHTML = `
+                    <div class="card-top">
+                        <span>${f.airline.name} · ${f.flight.iata}</span>
+                        <span style="color: ${f.flight_status === 'active' ? '#22c55e' : '#E8610A'}">● ${f.flight_status.toUpperCase()}</span>
+                    </div>
+                    <div class="card-mid">
+                        <div class="iata">${f.departure.iata || '--'}</div>
+                        <div style="font-size: 24px;">✈️</div>
+                        <div class="iata">${f.arrival.iata || '--'}</div>
+                    </div>
+                    <div class="card-bot">
+                        <span><b>PUERTA:</b> ${f.departure.gate || 'TBD'}</span>
+                        <span><b>TERMINAL:</b> ${f.departure.terminal || '-'}</span>
+                    </div>
+                `;
+                document.getElementById('results').prepend(card);
+                s++; localStorage.setItem('_vh_s', s); u();
+            }
+        } catch (e) {
+            alert("Error de radar. Intenta de nuevo.");
+        } finally {
+            b.innerText = "BUSCAR"; b.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
