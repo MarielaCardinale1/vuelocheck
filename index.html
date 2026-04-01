@@ -4,19 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VueloCheck VH - ViajaHoy</title>
-    
-    <!-- Estilos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; margin: 0; color: #1a1a1a; }
         .vc-card { background: white; border-radius: 30px; padding: 25px; box-shadow: 0 10px 30px rgba(232,97,10,0.05); border: 1px solid #eee; margin-bottom: 20px; }
-        .vc-btn { cursor: pointer; transition: all 0.2s; border: none; }
+        .vc-btn { cursor: pointer; transition: all 0.2s; border: none; outline: none; }
         .vc-btn:hover { transform: scale(1.02); opacity: 0.9; }
         .animate-bounce { animation: bounce 2s infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        /* Modal Checklist */
         #checklist-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: none; z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: white; width: 100%; max-width: 450px; border-radius: 40px; max-height: 85vh; overflow-y: auto; position: relative; }
     </style>
@@ -29,17 +25,12 @@
         <p style="color: #E8610A; font-weight: 900; margin-top: 20px; letter-spacing: 2px;">VUELOCHECK VH</p>
     </div>
 
+    <!-- App Principal -->
     <div id="app" style="display: none;">
-        <!-- Header -->
-        <nav style="background: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; sticky top-0 z-50;">
+        <nav style="background: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-50;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: #E8610A; padding: 8px; border-radius: 12px; box-shadow: 0 5px 15px rgba(232,97,10,0.2);">
-                    <img src="https://img.icons8.com/ios-filled/50/ffffff/airplane-mode-on.png" style="width: 20px;">
-                </div>
-                <div>
-                    <div style="font-weight: 900; font-size: 1.2rem; line-height: 1;">VUELOCHECK</div>
-                    <div style="font-size: 0.6rem; color: #E8610A; font-weight: 900; letter-spacing: 2px;">VIAJAHOY</div>
-                </div>
+                <div style="background: #E8610A; padding: 8px; border-radius: 12px;"><img src="https://img.icons8.com/ios-filled/50/ffffff/airplane-mode-on.png" style="width: 20px;"></div>
+                <div><div style="font-weight: 900; font-size: 1.2rem; line-height: 1;">VUELOCHECK</div><div style="font-size: 0.6rem; color: #E8610A; font-weight: 900; letter-spacing: 2px;">VIAJAHOY</div></div>
             </div>
             <button onclick="logout()" style="color: #ccc;"><img src="https://img.icons8.com/ios-filled/50/cccccc/logout-rounded.png" style="width: 20px;"></button>
         </nav>
@@ -55,28 +46,17 @@
                 </button>
             </div>
 
-            <!-- Lista de Vuelos -->
-            <div id="flight-list">
-                <!-- Se llena con JS -->
-            </div>
+            <div id="flight-list"></div>
 
-            <!-- Banner Premium -->
-            <div style="background: linear-gradient(135deg, #E8610A, #C4500A); padding: 35px; border-radius: 40px; color: white; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(232,97,10,0.2);">
-                <img src="https://img.icons8.com/ios-filled/100/ffffff/prize.png" style="position: absolute; top: -20px; right: -20px; width: 120px; opacity: 0.1;">
-                <h3 id="premium-title" style="font-weight: 900; font-size: 1.5rem; margin-bottom: 10px;">PLAN PREMIUM BETA</h3>
-                <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 25px;">Alertas 24/7 e ilimitados 💎</p>
+            <div style="background: linear-gradient(135deg, #E8610A, #C4500A); padding: 35px; border-radius: 40px; color: white; position: relative; overflow: hidden;">
+                <h3 id="premium-title" style="font-weight: 900; font-size: 1.5rem; margin-bottom: 10px;">PLAN PREMIUM 💎</h3>
+                <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 25px;">Alertas 24/7 e ilimitados.</p>
                 <div id="premium-actions" style="display: flex; gap: 10px;">
                     <button onclick="window.open('https://buy.stripe.com/test_555', '_blank')" class="vc-btn" style="flex: 1; background: white; color: #E8610A; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 0.7rem;">PLAN VIAJERO $5</button>
                     <button onclick="window.open('https://buy.stripe.com/test_1515', '_blank')" class="vc-btn" style="flex: 1; background: rgba(0,0,0,0.2); color: white; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 0.7rem; border: 1px solid rgba(255,255,255,0.2);">PLAN $15</button>
                 </div>
             </div>
         </main>
-
-        <!-- WhatsApp -->
-        <a href="https://wa.me/5491112345678" target="_blank" style="position: fixed; bottom: 25px; right: 25px; background: white; padding: 12px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-decoration: none; border: 1px solid #eee; z-index: 100;">
-            <div style="background: #25D366; padding: 5px; border-radius: 50%; display: flex;"><img src="https://img.icons8.com/ios-filled/50/ffffff/whatsapp.png" style="width: 16px;"></div>
-            <span style="font-size: 0.7rem; font-weight: 900; color: #1a1a1a;">Hablá con Mariela</span>
-        </a>
     </div>
 
     <!-- Login Screen -->
@@ -93,21 +73,14 @@
     <div id="checklist-modal">
         <div class="modal-content">
             <div style="padding: 30px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; sticky top-0 bg-white z-10;">
-                <div>
-                    <h2 style="font-weight: 900; font-size: 1.5rem; line-height: 1;">CHECKLIST</h2>
-                    <p style="font-size: 0.6rem; color: #aaa; font-weight: 800; letter-spacing: 1px; margin-top: 5px;">NO OLVIDES NADA</p>
-                </div>
+                <h2 style="font-weight: 900; font-size: 1.5rem;">CHECKLIST</h2>
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="resetChecklist()" style="padding: 10px;"><img src="https://img.icons8.com/ios-filled/50/E8610A/restart.png" style="width: 20px;"></button>
-                    <button onclick="closeChecklist()" style="padding: 10px;"><img src="https://img.icons8.com/ios-filled/50/999999/multiply.png" style="width: 20px;"></button>
+                    <button onclick="resetChecklist()" title="Reiniciar lista"><img src="https://img.icons8.com/ios-filled/50/E8610A/restart.png" style="width: 20px;"></button>
+                    <button onclick="closeChecklist()"><img src="https://img.icons8.com/ios-filled/50/999999/multiply.png" style="width: 20px;"></button>
                 </div>
             </div>
-            <div id="checklist-items" style="padding: 30px;">
-                <!-- Se llena con JS -->
-            </div>
-            <div style="padding: 30px; background: #fafafa;">
-                <button onclick="closeChecklist()" class="vc-btn" style="width: 100%; background: #E8610A; color: white; padding: 18px; border-radius: 20px; font-weight: 900;">LISTO</button>
-            </div>
+            <div id="checklist-items" style="padding: 20px;"></div>
+            <div style="padding: 20px;"><button onclick="closeChecklist()" class="vc-btn" style="width: 100%; background: #E8610A; color: white; padding: 18px; border-radius: 20px; font-weight: 900;">LISTO</button></div>
         </div>
     </div>
 
@@ -117,7 +90,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // --- CONFIGURACIÓN ---
         const firebaseConfig = {
             projectId: "gen-lang-client-0933834825",
             appId: "1:542933361078:web:41e58120871a480bfd2117",
@@ -148,15 +120,12 @@
             { id: '19', text: 'Llaves de casa y auto', completed: false }
         ];
 
-        // Inicializar
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.app().firestore(DB_ID);
-
         let currentUser = null;
         let checklist = [];
 
-        // Auth Listener
         auth.onAuthStateChanged(async (user) => {
             document.getElementById('loading-screen').style.display = 'none';
             if (user) {
@@ -164,7 +133,6 @@
                 document.getElementById('app').style.display = 'block';
                 document.getElementById('login-screen').style.display = 'none';
                 
-                // Cargar Datos
                 const doc = await db.collection('users').doc(user.uid).get();
                 const data = doc.data();
                 
@@ -173,12 +141,10 @@
                     document.getElementById('premium-actions').style.display = 'none';
                 }
 
-                checklist = data?.checklist || DEFAULT_LIST;
+                checklist = data?.checklist || DEFAULT_CHECKLIST;
                 if (checklist.length < 5) checklist = DEFAULT_CHECKLIST;
-                
                 renderChecklist();
                 
-                // Escuchar Vuelos
                 db.collection(`users/${user.uid}/flights`).onSnapshot(snap => {
                     const flights = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderFlights(flights);
@@ -189,14 +155,8 @@
             }
         });
 
-        function login() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
-        }
-
-        function logout() {
-            auth.signOut();
-        }
+        function login() { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider); }
+        function logout() { auth.signOut(); }
 
         function renderFlights(flights) {
             const list = document.getElementById('flight-list');
@@ -222,7 +182,7 @@
         function renderChecklist() {
             const container = document.getElementById('checklist-items');
             container.innerHTML = checklist.map(item => `
-                <div onclick="toggleItem('${item.id}')" style="display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 20px; border: 1px solid ${item.completed ? '#e8f5e9' : '#eee'}; background: ${item.completed ? '#f9fdfa' : 'white'}; cursor: pointer; opacity: ${item.completed ? 0.6 : 1};">
+                <div onclick="toggleItem('${item.id}')" style="display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 20px; border: 1px solid ${item.completed ? '#e8f5e9' : '#eee'}; background: ${item.completed ? '#f9fdfa' : 'white'}; cursor: pointer; margin-bottom: 10px;">
                     <div style="width: 24px; height: 24px; border-radius: 8px; border: 2px solid ${item.completed ? '#22c55e' : '#ddd'}; background: ${item.completed ? '#22c55e' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
                         ${item.completed ? '<img src="https://img.icons8.com/ios-filled/50/ffffff/checkmark.png" style="width: 12px;">' : ''}
                     </div>
@@ -238,7 +198,7 @@
         }
 
         async function resetChecklist() {
-            if (!confirm("¿Quieres reiniciar toda la lista?")) return;
+            if (!confirm("¿Reiniciar lista?")) return;
             checklist = DEFAULT_CHECKLIST;
             renderChecklist();
             await db.collection('users').doc(currentUser.uid).set({ checklist }, { merge: true });
