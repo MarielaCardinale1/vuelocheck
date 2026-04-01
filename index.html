@@ -1,246 +1,224 @@
-<div id="vuelocheck-app-container"></div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VueloCheck VH - ViajaHoy</title>
+    
+    <!-- Estilos y Fuentes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; margin: 0; }
+        #root { min-height: 100vh; }
+        .animate-bounce { animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #F5C9A8; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-<!-- Librerías de Alto Rendimiento -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Librerías Externas -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-<script type="text/babel">
-    const { useState, useEffect, useRef, useMemo } = React;
-    const { motion, AnimatePresence } = window.Motion;
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { motion, AnimatePresence } = window.Motion;
 
-    // --- CONFIGURACIÓN MAESTRA ---
-    const firebaseConfig = {
-        projectId: "gen-lang-client-0933834825",
-        appId: "1:542933361078:web:41e58120871a480bfd2117",
-        apiKey: "AIzaSyB7JO2HnVxryuVEduIrfdRRWJw7VWsRq7c",
-        authDomain: "gen-lang-client-0933834825.firebaseapp.com",
-        firestoreDatabaseId: "ai-studio-425c3005-83a4-42ee-97a4-c0e6353f3a0a"
-    };
+        // --- CONFIGURACIÓN (Mariela: No toques esto, ya está listo) ---
+        const firebaseConfig = {
+            projectId: "gen-lang-client-0933834825",
+            appId: "1:542933361078:web:41e58120871a480bfd2117",
+            apiKey: "AIzaSyB7JO2HnVxryuVEduIrfdRRWJw7VWsRq7c",
+            authDomain: "gen-lang-client-0933834825.firebaseapp.com"
+        };
+        const FIRESTORE_DB = "ai-studio-425c3005-83a4-42ee-97a4-c0e6353f3a0a";
+        
+        // Mariela: Pon tu clave de Aviationstack aquí para que busque vuelos reales
+        const AVIATIONSTACK_KEY = "TU_API_KEY_AQUÍ"; 
 
-    const AVIATIONSTACK_KEY = "TU_API_KEY_AQUÍ"; 
-    const WHATSAPP_NUMBER = "5491112345678";
+        // Inicializar Firebase
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.app().firestore(FIRESTORE_DB);
 
-    // Inicializar Firebase
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // Iconos Lucide
-    const Icon = ({ name, className = "w-5 h-5", fill = "none" }) => {
-        const [iconHtml, setIconHtml] = useState('');
-        useEffect(() => {
-            if (window.lucide) {
-                const icon = window.lucide.icons[name];
-                if (icon) setIconHtml(icon.toSvg({ class: className, fill }));
-            }
-        }, [name, className, fill]);
-        return <span dangerouslySetInnerHTML={{ __html: iconHtml }} className="inline-flex items-center" />;
-    };
-
-    // --- APP PRINCIPAL ---
-    function App() {
-        const [user, setUser] = useState(null);
-        const [loading, setLoading] = useState(true);
-        const [flights, setFlights] = useState([]);
-        const [isPremium, setIsPremium] = useState(false);
-        const [showChecklist, setShowChecklist] = useState(false);
-        const [checklistItems, setChecklistItems] = useState([]);
-
-        const DEFAULT_CHECKLIST = [
-            { id: '1', text: 'Check-in online realizado', completed: false },
-            { id: '2', text: 'Documentación (Pasaporte / DNI)', completed: false },
-            { id: '3', text: 'Pasajes / Boarding Pass', completed: false },
-            { id: '4', text: 'Reserva de Hotel / Alojamiento', completed: false },
-            { id: '5', text: 'Seguro de Viaje / Asistencia', completed: false },
-            { id: '6', text: 'Dinero / Tarjetas / Aviso al Banco', completed: false },
-            { id: '7', text: 'Medicación si tomara', completed: false },
-            { id: '8', text: 'Cargadores y Powerbank', completed: false },
-            { id: '9', text: 'Adaptador de corriente universal', completed: false },
-            { id: '10', text: 'Activar Roaming / Comprar Chip', completed: false },
-            { id: '11', text: 'Copia de documentos en la nube', completed: false },
-            { id: '12', text: 'Descargar mapas offline', completed: false },
-            { id: '13', text: 'Auriculares y Entretenimiento', completed: false },
-            { id: '14', text: 'Almohada de cuello / Antifaz', completed: false },
-            { id: '15', text: 'Ropa adecuada al clima', completed: false },
-            { id: '16', text: 'Artículos de aseo personal', completed: false },
-            { id: '17', text: 'Botella de agua (vacía)', completed: false },
-            { id: '18', text: 'Snacks para el viaje', completed: false },
-            { id: '19', text: 'Llaves de casa y auto', completed: false }
-        ];
-
-        useEffect(() => {
-            return auth.onAuthStateChanged(async (u) => {
-                if (u) {
-                    const userRef = db.collection('users').doc(u.uid);
-                    const doc = await userRef.get();
-                    const userData = doc.data();
-                    setIsPremium(userData?.isPremium || false);
-                    
-                    // Lógica de Checklist Profesional
-                    let savedChecklist = userData?.checklist || [];
-                    if (savedChecklist.length < 5) { // Si es la lista vieja, actualizamos
-                        savedChecklist = DEFAULT_CHECKLIST;
-                        await userRef.set({ checklist: savedChecklist }, { merge: true });
-                    }
-                    setChecklistItems(savedChecklist);
-
-                    db.collection(`users/${u.uid}/flights`).onSnapshot(snap => {
-                        setFlights(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-                    });
+        // Iconos
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const [svg, setSvg] = useState('');
+            useEffect(() => {
+                if (window.lucide) {
+                    const icon = window.lucide.icons[name];
+                    if (icon) setSvg(icon.toSvg({ class: className }));
                 }
-                setUser(u);
-                setLoading(false);
-            });
-        }, []);
-
-        const resetChecklist = async () => {
-            if (!user) return;
-            setChecklistItems(DEFAULT_CHECKLIST);
-            await db.collection('users').doc(user.uid).update({ checklist: DEFAULT_CHECKLIST });
+            }, [name, className]);
+            return <span dangerouslySetInnerHTML={{ __html: svg }} className="inline-flex" />;
         };
 
-        const toggleCheck = async (id) => {
-            const newList = checklistItems.map(item => item.id === id ? { ...item, completed: !item.completed } : item);
-            setChecklistItems(newList);
-            await db.collection('users').doc(user.uid).update({ checklist: newList });
-        };
+        function App() {
+            const [user, setUser] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [flights, setFlights] = useState([]);
+            const [isPremium, setIsPremium] = useState(false);
+            const [showChecklist, setShowChecklist] = useState(false);
+            const [checklist, setChecklist] = useState([]);
 
-        const login = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+            const DEFAULT_LIST = [
+                { id: '1', text: 'Check-in online realizado', completed: false },
+                { id: '2', text: 'Documentación (Pasaporte / DNI)', completed: false },
+                { id: '3', text: 'Pasajes / Boarding Pass', completed: false },
+                { id: '4', text: 'Reserva de Hotel / Alojamiento', completed: false },
+                { id: '5', text: 'Seguro de Viaje / Asistencia', completed: false },
+                { id: '6', text: 'Dinero / Tarjetas / Aviso al Banco', completed: false },
+                { id: '7', text: 'Cargadores y Powerbank', completed: false },
+                { id: '8', text: 'Adaptador de corriente universal', completed: false },
+                { id: '9', text: 'Activar Roaming / Comprar Chip', completed: false },
+                { id: '10', text: 'Descargar mapas offline', completed: false }
+            ];
 
-        if (loading) return <div className="h-[600px] flex items-center justify-center bg-[#FFF8F0]"><Icon name="Plane" className="text-[#E8610A] w-12 h-12 animate-bounce" /></div>;
+            useEffect(() => {
+                return auth.onAuthStateChanged(async (u) => {
+                    if (u) {
+                        const doc = await db.collection('users').doc(u.uid).get();
+                        const data = doc.data();
+                        setIsPremium(data?.isPremium || false);
+                        setChecklist(data?.checklist || DEFAULT_LIST);
+                        
+                        db.collection(`users/${u.uid}/flights`).onSnapshot(s => {
+                            setFlights(s.docs.map(d => ({ id: d.id, ...d.data() })));
+                        });
+                    }
+                    setUser(u);
+                    setLoading(false);
+                });
+            }, []);
 
-        if (!user) return (
-            <div className="min-h-[700px] flex flex-col items-center justify-center p-6 bg-[#FFF8F0]">
-                <div className="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-sm w-full border border-[#F5C9A8]">
-                    <div className="bg-[#E8610A] p-4 rounded-3xl inline-block mb-6 shadow-xl">
-                        <Icon name="Plane" className="text-white w-10 h-10" />
+            const login = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+            const toggleCheck = async (id) => {
+                const newList = checklist.map(i => i.id === id ? {...i, completed: !i.completed} : i);
+                setChecklist(newList);
+                await db.collection('users').doc(user.uid).update({ checklist: newList });
+            };
+
+            if (loading) return <div className="h-screen flex items-center justify-center"><Icon name="Plane" className="text-[#E8610A] w-12 h-12 animate-bounce" /></div>;
+
+            if (!user) return (
+                <div className="h-screen flex flex-col items-center justify-center p-6">
+                    <div className="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-sm w-full border border-[#F5C9A8]">
+                        <div className="bg-[#E8610A] p-4 rounded-3xl inline-block mb-6 shadow-xl shadow-[#E8610A]/20">
+                            <Icon name="Plane" className="text-white w-10 h-10" />
+                        </div>
+                        <h1 className="text-3xl font-black text-zinc-900 mb-2 uppercase tracking-tighter">VueloCheck VH</h1>
+                        <p className="text-zinc-500 mb-8 font-medium italic">Tu asistente de ViajaHoy.</p>
+                        <button onClick={login} className="w-full py-4 bg-[#E8610A] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg hover:bg-[#C4500A] transition-all">Entrar con Google</button>
                     </div>
-                    <h1 className="text-3xl font-black text-zinc-900 mb-2 uppercase tracking-tighter">VueloCheck VH</h1>
-                    <p className="text-zinc-500 mb-8 font-medium italic">Tu asistente de ViajaHoy.</p>
-                    <button onClick={login} className="w-full py-4 bg-[#E8610A] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg hover:bg-[#C4500A] transition-all">Entrar con Google</button>
                 </div>
-            </div>
-        );
+            );
 
-        return (
-            <div className="min-h-[800px] bg-[#FFF8F0] pb-32 relative font-sans">
-                {/* Header */}
-                <nav className="bg-white border-b border-zinc-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-[#E8610A] p-1.5 rounded-lg shadow-lg">
-                            <Icon name="Plane" className="text-white w-5 h-5" />
+            return (
+                <div className="min-h-screen bg-[#FFF8F0] pb-20">
+                    <nav className="bg-white border-b border-zinc-100 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-[#E8610A] p-1.5 rounded-lg shadow-lg">
+                                <Icon name="Plane" className="text-white w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col -space-y-1">
+                                <span className="font-black text-2xl tracking-tighter text-zinc-900 uppercase leading-none">Vuelo</span>
+                                <span className="text-[8px] font-black text-[#E8610A] uppercase tracking-[0.3em] ml-0.5">ViajaHoy</span>
+                            </div>
                         </div>
-                        <div className="flex flex-col -space-y-1">
-                            <span className="font-black text-2xl tracking-tighter text-zinc-900 uppercase">Vuelo</span>
-                            <span className="text-[8px] font-black text-[#E8610A] uppercase tracking-[0.3em] ml-0.5">ViajaHoy</span>
-                        </div>
-                    </div>
-                    <button onClick={() => auth.signOut()} className="text-zinc-400 hover:text-[#E8610A]"><Icon name="LogOut" /></button>
-                </nav>
+                        <button onClick={() => auth.signOut()} className="text-zinc-400 hover:text-[#E8610A]"><Icon name="LogOut" /></button>
+                    </nav>
 
-                <main className="p-6 max-w-2xl mx-auto space-y-8">
-                    <header className="flex justify-between items-end">
-                        <div>
-                            <h2 className="text-4xl font-black text-zinc-900 tracking-tighter uppercase">Mis Viajes</h2>
-                            <p className="text-zinc-500 font-medium">Gestiona tus itinerarios.</p>
-                        </div>
-                        <button onClick={() => setShowChecklist(true)} className="bg-zinc-100 text-zinc-600 p-4 rounded-2xl hover:bg-zinc-200 transition-colors">
-                            <Icon name="List" />
-                        </button>
-                    </header>
+                    <main className="p-6 max-w-2xl mx-auto space-y-8">
+                        <header className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-4xl font-black text-zinc-900 tracking-tighter uppercase">Mis Viajes</h2>
+                                <p className="text-zinc-500 font-medium">Gestiona tus itinerarios.</p>
+                            </div>
+                            <button onClick={() => setShowChecklist(true)} className="bg-white text-zinc-600 p-4 rounded-2xl shadow-sm border border-zinc-100"><Icon name="List" /></button>
+                        </header>
 
-                    {/* Lista de Vuelos */}
-                    <div className="space-y-6">
-                        {flights.length === 0 ? (
-                            <div className="py-20 text-center opacity-20"><Icon name="PlaneLanding" className="w-16 h-16 mx-auto mb-4" /><p className="font-black uppercase tracking-widest text-xs">Sin vuelos activos</p></div>
-                        ) : (
-                            flights.map(f => (
-                                <div key={f.id} className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-zinc-50">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <span className="bg-[#FFF3EB] text-[#E8610A] px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Vuelo {f.flightNumber}</span>
-                                        <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> {f.status}</span>
+                        <div className="space-y-6">
+                            {flights.length === 0 ? (
+                                <div className="py-20 text-center opacity-20"><Icon name="PlaneLanding" className="w-16 h-16 mx-auto mb-4" /><p className="font-black uppercase tracking-widest text-xs">Sin vuelos activos</p></div>
+                            ) : (
+                                flights.map(f => (
+                                    <div key={f.id} className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-zinc-50">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <span className="bg-[#FFF3EB] text-[#E8610A] px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Vuelo {f.flightNumber}</span>
+                                            <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" /> {f.status}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div className="text-center"><div className="text-4xl font-black text-zinc-900 tracking-tighter">{f.origin?.code || 'EZE'}</div></div>
+                                            <Icon name="Plane" className="text-[#E8610A] rotate-90 w-6 h-6" />
+                                            <div className="text-center"><div className="text-4xl font-black text-zinc-900 tracking-tighter">{f.destination?.code || 'MAD'}</div></div>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <div className="text-center"><div className="text-4xl font-black text-zinc-900 tracking-tighter">{f.origin?.code}</div></div>
-                                        <Icon name="Plane" className="text-[#E8610A] rotate-90 w-6 h-6" />
-                                        <div className="text-center"><div className="text-4xl font-black text-zinc-900 tracking-tighter">{f.destination?.code}</div></div>
-                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="bg-gradient-to-br from-[#E8610A] to-[#C4500A] p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 opacity-20"><Icon name="Award" className="w-full h-full" /></div>
+                            <h3 className="text-2xl font-black mb-4 uppercase">{isPremium ? "Premium Activo 💎" : "Plan Premium Beta"}</h3>
+                            {!isPremium && (
+                                <div className="grid grid-cols-2 gap-3 mt-6">
+                                    <button onClick={() => window.open('https://buy.stripe.com/test_555', '_blank')} className="py-3 bg-white text-[#E8610A] rounded-xl font-black text-center text-xs uppercase">Plan $5</button>
+                                    <button onClick={() => window.open('https://buy.stripe.com/test_1515', '_blank')} className="py-3 bg-black/20 text-white border border-white/20 rounded-xl font-black text-center text-xs uppercase">Plan $15</button>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    </main>
 
-                    {/* Banner Premium */}
-                    <div className="bg-gradient-to-br from-[#E8610A] to-[#C4500A] p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 opacity-20"><Icon name="Award" className="w-full h-full" /></div>
-                        <h3 className="text-2xl font-black mb-4 uppercase">{isPremium ? "Premium Activo 💎" : "Plan Premium Beta"}</h3>
-                        {!isPremium && (
-                            <div className="grid grid-cols-2 gap-3 mt-6">
-                                <button onClick={() => window.open('https://buy.stripe.com/test_555', '_blank')} className="py-3 bg-white text-[#E8610A] rounded-xl font-black text-center text-xs uppercase">Plan $5</button>
-                                <button onClick={() => window.open('https://buy.stripe.com/test_1515', '_blank')} className="py-3 bg-black/20 text-white border border-white/20 rounded-xl font-black text-center text-xs uppercase">Plan $15</button>
+                    <AnimatePresence>
+                        {showChecklist && (
+                            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChecklist(false)} className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm" />
+                                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white w-full max-w-md rounded-[2.5rem] p-8 relative z-10 max-h-[80vh] overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-black uppercase">Checklist</h2>
+                                        <button onClick={() => setShowChecklist(false)}><Icon name="X" className="text-zinc-400" /></button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {checklist.map(item => (
+                                            <div key={item.id} onClick={() => toggleCheck(item.id)} className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${item.completed ? 'bg-emerald-50 border-emerald-100 opacity-60' : 'bg-zinc-50 border-zinc-100'}`}>
+                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-200'}`}>
+                                                    {item.completed && <Icon name="Check" className="w-4 h-4" />}
+                                                </div>
+                                                <span className={`text-sm font-bold ${item.completed ? 'text-emerald-700 line-through' : 'text-zinc-700'}`}>{item.text}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
                             </div>
                         )}
+                    </AnimatePresence>
+
+                    <div className="fixed bottom-8 right-6 z-40">
+                        <a href="https://wa.me/5491112345678" target="_blank" className="flex items-center gap-3 bg-white border border-zinc-100 shadow-xl p-2 pr-4 rounded-full">
+                            <div className="bg-[#25D366] p-2 rounded-full text-white shadow-lg"><Icon name="MessageCircle" className="w-5 h-5" /></div>
+                            <span className="text-xs font-bold text-zinc-900">Hablá con Mariela</span>
+                        </a>
                     </div>
-                </main>
-
-                {/* Modal Checklist */}
-                <AnimatePresence>
-                    {showChecklist && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChecklist(false)} className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm" />
-                            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[80vh]">
-                                <div className="p-8 border-b border-zinc-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                                    <div>
-                                        <h2 className="text-2xl font-black text-zinc-900 tracking-tight uppercase">Checklist</h2>
-                                        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">No olvides nada</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={resetChecklist} className="p-2 text-zinc-400 hover:text-[#E8610A]" title="Reiniciar lista"><Icon name="RotateCcw" className="w-5 h-5" /></button>
-                                        <button onClick={() => setShowChecklist(false)} className="p-2 hover:bg-zinc-100 rounded-full"><Icon name="X" className="w-5 h-5 text-zinc-400" /></button>
-                                    </div>
-                                </div>
-                                <div className="p-8 overflow-y-auto space-y-4">
-                                    {checklistItems.map(item => (
-                                        <div key={item.id} onClick={() => toggleCheck(item.id)} className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${item.completed ? 'bg-emerald-50 border-emerald-100 opacity-60' : 'bg-zinc-50 border-zinc-100'}`}>
-                                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-200'}`}>
-                                                {item.completed && <Icon name="Check" className="w-4 h-4" />}
-                                            </div>
-                                            <span className={`text-sm font-bold ${item.completed ? 'text-emerald-700 line-through' : 'text-zinc-700'}`}>{item.text}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="p-8 bg-zinc-50 border-t border-zinc-100">
-                                    <button onClick={() => setShowChecklist(false)} className="w-full py-4 bg-[#E8610A] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg">Listo</button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
-
-                {/* WhatsApp Flotante */}
-                <div className="fixed bottom-8 right-6 z-40">
-                    <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" className="flex items-center gap-3 bg-white border border-zinc-100 shadow-xl p-2 pr-4 rounded-full">
-                        <div className="bg-[#25D366] p-2 rounded-full text-white"><Icon name="MessageCircle" className="w-5 h-5 fill-current" /></div>
-                        <div className="flex flex-col -space-y-1"><span className="text-[10px] font-black text-[#E8610A] uppercase tracking-widest">¿Dudas?</span><span className="text-xs font-bold text-zinc-900">Hablá con Mariela</span></div>
-                    </a>
                 </div>
-            </div>
-        );
-    }
+            );
+        }
 
-    const root = ReactDOM.createRoot(document.getElementById('vuelocheck-app-container'));
-    root.render(<App />);
-</script>
-
-<style>
-    #vuelocheck-app-container { min-height: 800px; width: 100%; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .animate-bounce { animation: bounce 2s infinite; }
-</style>
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
